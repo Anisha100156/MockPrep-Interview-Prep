@@ -5,7 +5,6 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
@@ -32,11 +31,13 @@ const FormField = <T extends FieldValues>({
         <FormItem>
           <FormLabel className="label">{label}</FormLabel>
           <FormControl>
-            <Input className="input" placeholder={placeholder} type={type}
+            <Input
+              className="input"
+              type={type}
+              placeholder={placeholder}
               {...field}
             />
           </FormControl>
-          
           <FormMessage />
         </FormItem>
       )}

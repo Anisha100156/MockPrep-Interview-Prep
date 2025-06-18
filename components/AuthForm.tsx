@@ -22,9 +22,9 @@ import FormField from "./FormField";
 
 const authFormSchema = (type: FormType) => {
   return z.object({
-    name: type === "sign-up" ? z.string().min(3, "Name must be at least 3 characters.") : z.string().optional(),
-    email: z.string().email("Invalid email address."),
-    password: z.string().min(6, "Password must be at least 6 characters."),
+    name: type === "sign-up" ? z.string().min(3) : z.string().optional(),
+    email: z.string().email(),
+    password: z.string().min(3),
   });
 };
 
@@ -59,8 +59,8 @@ const AuthForm = ({ type }: { type: FormType }) => {
           password,
         });
 
-        if (!result?.success) {
-          toast.error(result?.message || "Error during sign-up.");
+        if (!result.success) {
+          toast.error(result.message);
           return;
         }
 
@@ -77,7 +77,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
 
         const idToken = await userCredential.user.getIdToken();
         if (!idToken) {
-          toast.error("Sign in failed. Please try again.");
+          toast.error("Sign in Failed. Please try again.");
           return;
         }
 
@@ -89,28 +89,9 @@ const AuthForm = ({ type }: { type: FormType }) => {
         toast.success("Signed in successfully.");
         router.push("/");
       }
-    } catch (error: any) {
-      console.error("Auth Error:", error);
-
-      // Custom error messages
-      switch (error.code) {
-        case "auth/email-already-in-use":
-          toast.error("An account with this email already exists. Try signing in.");
-          router.push("/sign-in");
-          break;
-        case "auth/invalid-email":
-          toast.error("Please enter a valid email address.");
-          break;
-        case "auth/weak-password":
-          toast.error("Password should be at least 6 characters.");
-          break;
-        case "auth/user-not-found":
-        case "auth/wrong-password":
-          toast.error("Invalid email or password.");
-          break;
-        default:
-          toast.error("An unexpected error occurred. Please try again.");
-      }
+    } catch (error) {
+      console.log(error);
+      toast.error(`There was an error: ${error}`);
     }
   };
 
@@ -157,7 +138,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
               type="password"
             />
 
-            <Button className="btn" type="submit" disabled={form.formState.isSubmitting}>
+            <Button className="btn" type="submit">
               {isSignIn ? "Sign In" : "Create an Account"}
             </Button>
           </form>
