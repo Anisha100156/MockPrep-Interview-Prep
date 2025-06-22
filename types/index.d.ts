@@ -18,8 +18,15 @@ interface Interview {
   role: string;
   level: string;
   questions: string[];
+  codingQuestion?: {
+    title: string;
+    difficulty: string;
+    description: string;
+    examples: string[];
+  }
   techstack: string[];
   createdAt: string;
+  coverImage: string,
   userId: string;
   type: string;
   finalized: boolean;
@@ -30,30 +37,45 @@ interface CreateFeedbackParams {
   userId: string;
   transcript: { role: string; content: string }[];
   feedbackId?: string;
+  codeData?: any;
+
 }
 
 interface User {
   name: string;
   email: string;
+  isVerified: boolean;
+  isPro: boolean;
+  provider: string;
+  photoURL?: string;
+  createdAt: string;
   id: string;
 }
 
 interface InterviewCardProps {
-  interviewId?: string;
+  id?: string;
   userId?: string;
   role: string;
   type: string;
+  coverImage?: string;
+  finalized: boolean;
   techstack: string[];
   createdAt?: string;
 }
 
 interface AgentProps {
-  userName: string;
+  userName: string | undefined;
   userId?: string;
   interviewId?: string;
   feedbackId?: string;
   type: "generate" | "interview";
   questions?: string[];
+  codingQuestion?: {
+    title: string;
+    difficulty: string;
+    description: string;
+    examples: string[];
+  }
 }
 
 interface RouteParams {
@@ -63,6 +85,10 @@ interface RouteParams {
 
 interface GetFeedbackByInterviewIdParams {
   interviewId: string;
+  userId: string;
+}
+
+interface GetFeedbackByUserIdParams {
   userId: string;
 }
 
@@ -83,6 +109,14 @@ interface SignUpParams {
   password: string;
 }
 
+interface OAuthSignInParams {
+  uid: string;
+  name: string;
+  email: string;
+  photoURL?: string;
+  provider: 'google' | 'github';
+  idToken: string;
+}
 type FormType = "sign-in" | "sign-up";
 
 interface InterviewFormProps {

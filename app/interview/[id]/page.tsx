@@ -1,28 +1,23 @@
-import Image from "next/image";
-import { redirect } from "next/navigation";
+import Agent from '@/components/Agent';
+import DisplayTechIcons from '@/components/DisplayTechIcons';
+import { getCurrentUser } from '@/lib/actions/auth.action';
+import { getFeedbackByInterviewId, getInterviewById } from '@/lib/actions/general.action';
+import { getRandomInterviewCover } from '@/lib/utils';
+import Image from 'next/image';
+import { redirect } from 'next/navigation';
+import React from 'react'
 
-import Agent from "@/components/Agent";
-import { getRandomInterviewCover } from "@/lib/utils";
-
-import {
-  getFeedbackByInterviewId,
-  getInterviewById,
-} from "@/lib/actions/general.action";
-import { getCurrentUser } from "@/lib/actions/auth.action";
-import DisplayTechIcons from "@/components/DisplayTechIcons";
-
-const InterviewDetails = async ({ params }: RouteParams) => {
-  const { id } = await params;
-
-  const user = await getCurrentUser();
-
-  const interview = await getInterviewById(id);
-  if (!interview) redirect("/");
-
-  const feedback = await getFeedbackByInterviewId({
-    interviewId: id,
-    userId: user?.id!,
-  });
+const page = async ({params}:RouteParams) => {
+    const {id} = await params;
+    const interview = await getInterviewById(id);
+    if(!interview) redirect("/");
+    const user = await getCurrentUser();
+    if (!user) redirect("/");
+  
+    const feedback = await getFeedbackByInterviewId({
+      interviewId: id,
+      userId: user?.id!,
+    });
 
   return (
     <>
@@ -53,10 +48,11 @@ const InterviewDetails = async ({ params }: RouteParams) => {
         interviewId={id}
         type="interview"
         questions={interview.questions}
+        codingQuestion = {interview.codingQuestion}
         feedbackId={feedback?.id}
       />
     </>
-  );
-};
+  )
+}
 
-export default InterviewDetails;
+export default page
