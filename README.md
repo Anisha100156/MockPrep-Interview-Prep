@@ -25,7 +25,7 @@
 
 ## 📸 Demo Screenshot
 
-![AI Mock Interview Screenshot 1](./public/Screenshot_2025-06-27_020221.png)
+![AI Mock Interview Screenshot 1](Screenshot 2025-06-27 020221.png)
 
 
 
