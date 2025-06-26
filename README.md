@@ -1,6 +1,5 @@
-# 🎙️ AI-Powered Mock Interview Platform
-
-**AI Mock Interview Platform** is a web-based application designed to help job seekers practice interviews in a simulated, real-time environment. Powered by advanced AI voice and text processing, the platform allows users to experience behavioral and technical interview scenarios similar to real interviews.
+# 🎙️ MockPrep
+**MockPrep** is a web-based application designed to help job seekers practice interviews in a simulated, real-time environment. Powered by advanced AI voice and text processing, the platform allows users to experience behavioral and technical interview scenarios similar to real interviews.
 
 ---
 
@@ -47,9 +46,4 @@
 
 ---
 
-## 🌐 Live Demo (Optional)
-
-[👉 Visit the Live Site](https://your-vercel-deployment-link)
-
----
 
