@@ -25,7 +25,8 @@
 
 ## 📸 Demo Screenshot
 
-*_(Add demo image or GIF of the live interview screen here)_*
+![AI Mock Interview Screenshot 1](Screenshot 2025-06-27 020221.png)
+
 
 ---
 
