@@ -1,4 +1,5 @@
 "use client"
+
 import { useState } from 'react'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -10,10 +11,17 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { createUserWithEmailAndPassword, GithubAuthProvider, GoogleAuthProvider, sendEmailVerification, setPersistence, signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth'
+import {
+  createUserWithEmailAndPassword,
+  GithubAuthProvider,
+  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  signInWithPopup
+} from 'firebase/auth'
 import { auth } from '@/firebase/client'
 import { signUp, signIn, oauthSignIn } from '@/lib/actions/auth.action'
 
+// Validation schema
 const authFormSchema = (type: FormType) => {
   return z.object({
     name: type === "sign-up" ? z.string().min(3) : z.string().optional(),
@@ -22,11 +30,7 @@ const authFormSchema = (type: FormType) => {
   });
 };
 
-
 const AuthForm = ({ type }: { type: FormType }) => {
-  const [showResendVerification, setShowResendVerification] = useState(false);
-  const [emailForResend, setEmailForResend] = useState<string | null>(null);
-
   const router = useRouter();
 
   const formSchema = authFormSchema(type);
@@ -39,73 +43,58 @@ const AuthForm = ({ type }: { type: FormType }) => {
     },
   });
 
-  // 2. Define a submit handler.
+  // Handle sign-up and sign-in
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       if (type === 'sign-up') {
-        // console.log("sign-up",values);
         const { name, email, password } = values;
 
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        // const userDetails = {
-        //   email,
-        //   name: name!,
-        //   provider: "email",
-        // };
-        // localStorage.setItem("UserRegData", JSON.stringify(userDetails));
-        await sendEmailVerification(userCredential.user);
+
         const result = await signUp({
           uid: userCredential.user.uid,
           name: name!,
           email,
           password,
-        })
+        });
 
         if (!result?.success) {
-          toast.error(result?.message || "Error creating the user")
+          toast.error(result?.message || "Error creating the user");
           return;
         }
 
-        toast.success("Account created successfully, verify your email to continue");
+        toast.success("Account created successfully");
         router.push("/sign-in");
       } else {
-        // console.log("sing-in ", values)
         const { email, password } = values;
 
-        const userCredential = await signInWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
         const idToken = await userCredential.user.getIdToken();
 
         if (!idToken) {
-          toast.error("Error signing in the user, Token not found")
+          toast.error("Error signing in the user, Token not found");
           return;
         }
 
         const result = await signIn({
           email,
           idToken,
-        })
+        });
+
         if (!result?.success) {
-          if (result?.message === "Please verify your email before signing in. Check your inbox for the verification link.") {
-            setShowResendVerification(true);
-            setEmailForResend(email);
-          }
-          toast.error(result?.message || "Error signing in the user")
+          toast.error(result?.message || "Error signing in the user");
           return;
         }
+
         toast.success("Logged in successfully, redirecting to dashboard");
         router.push("/dashboard");
       }
-    } catch (error:any) {
+    } catch (error: any) {
       console.log("error", error);
 
-      // console.error("Authentication error:", error);
       let errorMessage = "An error occurred during authentication";
-      
+
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
         errorMessage = "Invalid email or password";
       } else if (error.code === 'auth/email-already-in-use') {
@@ -115,35 +104,10 @@ const AuthForm = ({ type }: { type: FormType }) => {
       } else if (error.code === 'auth/too-many-requests') {
         errorMessage = "Too many attempts. Please try again later";
       }
-      
-      toast.error(errorMessage, error);
+
+      toast.error(errorMessage);
     }
   }
-
-  async function resendVerificationEmail() {
-    if (!emailForResend) return;
-
-    try {
-      const userCredential = auth.currentUser;
-      if (!userCredential) {
-        toast.error("No user found. Please sign in again.");
-        return;
-      }
-      await sendEmailVerification(userCredential);
-
-      toast.success("Verification email resent. Please check your inbox.");
-      setShowResendVerification(false);
-    } catch (error:any) {
-      console.log("Error resending verification email:", error);
-      console.error("Error resending verification email:", error);
-
-      if (error.code === 'auth/too-many-requests') {
-        toast.error("You have tried resending too many times. Please wait before trying again.");
-      } 
-      toast.error("Failed to resend verification email");
-    }
-  }
-
 
   // OAuth Sign In Handler
   const handleOAuthSignIn = async (provider: 'google' | 'github') => {
@@ -186,7 +150,6 @@ const AuthForm = ({ type }: { type: FormType }) => {
     } catch (error: any) {
       console.error("OAuth error:", error);
 
-      // Handle user cancellation
       if (error.code === 'auth/popup-closed-by-user') {
         toast.error("Authentication was cancelled");
         return;
@@ -195,7 +158,6 @@ const AuthForm = ({ type }: { type: FormType }) => {
       toast.error(`Authentication failed: ${error.message}`);
     }
   };
-
 
   const isSignIn = type === "sign-in";
 
@@ -208,6 +170,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
         </div>
 
         <h3>Practice job interviews with AI</h3>
+
         {/* OAuth Buttons */}
         <div className="flex flex-col gap-3 w-full">
           <Button
@@ -267,17 +230,6 @@ const AuthForm = ({ type }: { type: FormType }) => {
             </Button>
           </form>
         </Form>
-
-        {showResendVerification && (
-          <div className="mt-4">
-            <button
-              onClick={resendVerificationEmail}
-              className="text-blue-500 underline hover:text-blue-700"
-            >
-              Resend Verification Email
-            </button>
-          </div>
-        )}
 
         <p className="text-center">
           {isSignIn ? "No account yet?" : "Have an account already?"}

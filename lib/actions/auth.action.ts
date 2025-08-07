@@ -41,23 +41,20 @@ export async function signUp(params: SignUpParams) {
         await db.collection("users").doc(uid).set({
             name,
             email,
-            isVerified: false,
+            // Remove verification requirement
+            isVerified: true,
             isPro: false,
             provider: "email",
             createdAt: new Date().toISOString(),
-            // profileURL,
-            // resumeURL,
         });
-
 
         return {
             success: true,
-            message: "Account created successfully. Please sign in.",
+            message: "Account created successfully. You can sign in now.",
         };
     } catch (error: any) {
         console.error("Error creating user:", error);
 
-        // Handle Firebase specific errors
         if (error.code === "auth/email-already-exists") {
             return {
                 success: false,
@@ -78,6 +75,7 @@ export async function signIn(params: SignInParams) {
     try {
         const decodedToken = await auth.verifyIdToken(idToken);
         const uid = decodedToken.uid;
+
         const userRecord = await auth.getUserByEmail(email);
         if (!userRecord)
             return {
@@ -85,29 +83,19 @@ export async function signIn(params: SignInParams) {
                 message: "User does not exist. Create an account.",
             };
 
+        // No email verification check here
 
-        // Update user record in Firestore with latest email verification status
+        // Make sure Firestore has this user (if not, create minimal record)
         const userDoc = await db.collection("users").doc(uid).get();
-        if (userDoc.exists) {
-            const userData = userDoc.data();
-
-            // Get the latest user info from Firebase Auth
-            const userRecord = await auth.getUser(uid);
-
-            // Update emailVerified status in Firestore if needed
-            if (userData?.isVerified !== userRecord.emailVerified) {
-                await db.collection("users").doc(uid).update({
-                    isVerified: userRecord.emailVerified
-                });
-            }
-
-            // Check if email is verified
-            if (!userRecord.emailVerified) {
-                return {
-                    success: false,
-                    message: "Please verify your email before signing in. Check your inbox for the verification link.",
-                };
-            }
+        if (!userDoc.exists) {
+            await db.collection("users").doc(uid).set({
+                name: userRecord.displayName || email,
+                email,
+                isVerified: true,
+                isPro: false,
+                provider: "email",
+                createdAt: new Date().toISOString(),
+            });
         }
 
         await setSessionCookie(idToken);
@@ -117,7 +105,7 @@ export async function signIn(params: SignInParams) {
             message: "Logged in successfully",
         }
     } catch (error: any) {
-        console.log("");
+        console.error("Failed to log into account:", error);
 
         return {
             success: false,
@@ -130,32 +118,26 @@ export async function oauthSignIn(params: OAuthSignInParams) {
     const { uid, name, email, photoURL, provider, idToken } = params;
 
     try {
-        // Get user from Firestore or create if not exists
         const userDoc = await db.collection("users").doc(uid).get();
 
         if (!userDoc.exists) {
-            // Create new user in Firestore
             await db.collection("users").doc(uid).set({
                 name,
                 email,
                 photoURL,
                 provider,
-                isVerified: true, // OAuth providers verify emails by default
+                isVerified: true,
                 isPro: false,
                 createdAt: new Date().toISOString(),
             });
         } else {
-            // Update existing user with latest info
             await db.collection("users").doc(uid).update({
                 lastLogin: new Date().toISOString(),
-                // Update provider if different
                 ...(provider && { provider }),
-                // Update photo URL if provided
                 ...(photoURL && { photoURL }),
             });
         }
 
-        // Set the session cookie
         await setSessionCookie(idToken);
 
         return {
@@ -173,7 +155,6 @@ export async function oauthSignIn(params: OAuthSignInParams) {
 
 export async function getCurrentUser(): Promise<User | null> {
     const cookieStore = await cookies();
-    
     const sessionCookie = cookieStore.get("session")?.value || null;
 
     if(!sessionCookie) return null;
@@ -194,7 +175,6 @@ export async function getCurrentUser(): Promise<User | null> {
     } catch (error) {
         console.error("Error getting current user:", error);
         return null;
-        
     }
 }
 
@@ -203,9 +183,7 @@ export async function isAuthenticated() {
     return !!user;
 }
 
-// Sign out user by clearing the session cookie
 export async function signOut() {
     const cookieStore = await cookies();
-  
     cookieStore.delete("session");
-  }
+}
